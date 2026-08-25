@@ -58,7 +58,8 @@ const ui = {
   editingId: null,
   addWaterAmount: 250,
   addWaterCustom: false,
-  addUrineSize: 'medium'
+  addUrineSize: 'medium',
+  cameFrom: 'dashboard' // remembers which top-level tab a sub-screen was opened from, for back nav + bottom-nav highlight
 };
 
 /* ==========================================================================
@@ -140,6 +141,7 @@ const SIZE_LABEL = { small: 'Small', medium: 'Medium', large: 'Large' };
    ========================================================================== */
 const ICONS = {
   drop: '<path d="M12 3c-3.6 5-7 9-7 12.8A7 7 0 0 0 12 22a7 7 0 0 0 7-6.2C19 12 15.6 8 12 3z"/>',
+  hamburger: '<path d="M4 7h16M4 12h16M4 17h16"/>',
   bell: '<path d="M6.5 8.5a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 1.5 5.5h-14s1.5-1.5 1.5-5.5Z"/><path d="M10 17.5a2 2 0 0 0 4 0"/>',
   calendar: '<rect x="3.5" y="5.5" width="17" height="15.5" rx="3.2"/><path d="M8 3.2v4.4M16 3.2v4.4M3.5 10.2h17"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
@@ -223,7 +225,8 @@ function getEntry(id) { return state.entries.find(e => e.id === id); }
 /* ==========================================================================
    5. ROUTER
    ========================================================================== */
-const ROUTES = ['dashboard', 'add-water', 'add-urine', 'history', 'stats', 'goals', 'reminders', 'settings', 'more', 'about'];
+const ROUTES = ['dashboard', 'add-water', 'add-urine', 'history', 'stats', 'goals', 'reminders', 'settings', 'profile', 'about'];
+const TOP_LEVEL_ROUTES = ['dashboard', 'history', 'stats'];
 
 function navigate(route, opts) {
   opts = opts || {};
@@ -232,6 +235,14 @@ function navigate(route, opts) {
   location.hash = '#/' + route;
   if (!opts.noScroll) window.scrollTo(0, 0);
   render();
+}
+
+/* Use this when opening a screen reached via the hamburger menu or the bell
+   icon, so the back arrow and bottom-nav highlight both return to whichever
+   top-level tab the person was actually on — not always the dashboard. */
+function navigateFrom(route) {
+  if (TOP_LEVEL_ROUTES.includes(ui.route)) ui.cameFrom = ui.route;
+  navigate(route);
 }
 
 function currentRouteFromHash() {
@@ -310,30 +321,29 @@ function pickNativeDate({ type, value, onChange }) {
 function renderTopbar() {
   const tb = document.getElementById('topbar');
   const brand = `<span class="brand-dot">${iconFilled('drop')}</span>`;
+  const hamburger = `<button class="tb-icon-btn" id="tb-menu" aria-label="Menu">${icon('hamburger', '', 2.2)}</button>`;
   let html = '';
   switch (ui.route) {
     case 'dashboard':
-      html = `<span class="tb-title">${brand}Hydro</span><span class="tb-spacer"></span>
+      html = `${hamburger}<span class="tb-title">${brand}Hydro</span><span class="tb-spacer"></span>
         <button class="tb-icon-btn" id="tb-reminder-btn" aria-label="Reminders">${icon('bell')}</button>`;
+      break;
+    case 'history':
+      html = `${hamburger}<span class="tb-heading">History</span><span class="tb-spacer"></span>
+        <button class="tb-icon-btn" id="tb-history-cal">${icon('calendar')}</button>`;
+      break;
+    case 'stats':
+      html = `${hamburger}<span class="tb-heading">Statistics</span><span class="tb-spacer"></span>`;
       break;
     case 'add-water':
     case 'add-urine':
     case 'goals':
     case 'reminders':
     case 'settings':
+    case 'profile':
     case 'about':
       html = `<button class="tb-back" id="tb-back">${icon('back', '', 2.3)}</button>
         <span class="tb-spacer"></span>`;
-      break;
-    case 'history':
-      html = `<span class="tb-heading">History</span><span class="tb-spacer"></span>
-        <button class="tb-icon-btn" id="tb-history-cal">${icon('calendar')}</button>`;
-      break;
-    case 'stats':
-      html = `<span class="tb-heading">Statistics</span><span class="tb-spacer"></span>`;
-      break;
-    case 'more':
-      html = `<span class="tb-title">${brand}Hydro</span><span class="tb-spacer"></span>`;
       break;
     default:
       html = `<span class="tb-heading"></span>`;
@@ -341,9 +351,11 @@ function renderTopbar() {
   tb.innerHTML = html;
 
   const back = document.getElementById('tb-back');
-  if (back) back.addEventListener('click', () => history.back ? goBack() : navigate('dashboard'));
+  if (back) back.addEventListener('click', goBack);
+  const menuBtn = document.getElementById('tb-menu');
+  if (menuBtn) menuBtn.addEventListener('click', openMenuSheet);
   const bellBtn = document.getElementById('tb-reminder-btn');
-  if (bellBtn) bellBtn.addEventListener('click', () => navigate('reminders'));
+  if (bellBtn) bellBtn.addEventListener('click', () => navigateFrom('reminders'));
   const histCal = document.getElementById('tb-history-cal');
   if (histCal) histCal.addEventListener('click', () => {
     pickNativeDate({
@@ -354,17 +366,24 @@ function renderTopbar() {
   });
 }
 
+/* Sub-screens always return to whichever top-level tab they were opened
+   from (tracked in ui.cameFrom by navigateFrom), so back behaves the same
+   way regardless of where in the app the person started — no reliance on
+   the browser's own back button/gesture, which differs between iOS and
+   Android. */
 function goBack() {
-  const map = { 'add-water': 'dashboard', 'add-urine': 'dashboard', 'goals': 'more', 'reminders': 'more', 'settings': 'more', 'about': 'more' };
-  navigate(map[ui.route] || 'dashboard');
+  if (ui.route === 'add-water' || ui.route === 'add-urine') { navigate('dashboard'); return; }
+  navigate(ui.cameFrom || 'dashboard');
 }
 
 /* ==========================================================================
    9. BOTTOM NAV
    ========================================================================== */
 function renderBottomNav() {
-  const topLevel = { dashboard: 'dashboard', history: 'history', stats: 'stats' };
-  const active = topLevel[ui.route] || (['more','goals','reminders','settings','about'].includes(ui.route) ? 'more' : '');
+  const subScreens = ['profile', 'goals', 'reminders', 'settings', 'about', 'add-water', 'add-urine'];
+  const active = TOP_LEVEL_ROUTES.includes(ui.route)
+    ? ui.route
+    : (subScreens.includes(ui.route) ? (ui.cameFrom || 'dashboard') : '');
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.route === active);
   });
@@ -391,7 +410,7 @@ function render() {
     case 'goals': return renderGoals(main);
     case 'reminders': return renderReminders(main);
     case 'settings': return renderSettings(main);
-    case 'more': return renderMore(main);
+    case 'profile': return renderProfile(main);
     case 'about': return renderAbout(main);
     default: return renderDashboard(main);
   }
@@ -1126,62 +1145,55 @@ function renderHistory(main) {
 }
 
 /* ==========================================================================
-   17. MORE MENU
+   17. HAMBURGER MENU (bottom sheet — mirrors the Cloud Kitchen "Menu" sheet:
+   drag handle, plain icon+label rows, and a pinned Cancel bar)
    ========================================================================== */
-function renderMore(main) {
-  const name = state.settings.userName || 'Friend';
-  main.innerHTML = `
-    <div class="card profile-card">
-      <span class="avatar">${icon('user','',1.8)}</span>
-      <div>
-        <h3>${escapeHtml(name)}</h3>
-        <p>Stay hydrated, stay healthy!</p>
-      </div>
-    </div>
-
-    <div class="menu-list" style="margin-top:16px;">
-      <button class="menu-row" data-go="goals">
-        <span class="mr-icon">${icon('target','',2)}</span>
-        <span class="mr-label">Goals</span>
-        <span class="mr-value">${formatTotalUnit(state.settings.goalMl)} / day</span>
-        <svg class="chev" viewBox="0 0 24 24">${ICONS.chevronRight}</svg>
+function openMenuSheet() {
+  const html = `
+    <div class="menu-sheet-head"><h3>Menu</h3></div>
+    <div class="menu-sheet-list">
+      <button class="menu-sheet-row" data-go="profile">
+        <span class="msr-icon">${icon('user', '', 2)}</span>
+        <span class="msr-label">My Profile</span>
       </button>
-      <button class="menu-row" data-go="reminders">
-        <span class="mr-icon">${icon('bell','',2)}</span>
-        <span class="mr-label">Reminders</span>
-        <span class="mr-value">${state.settings.reminders.enabled ? 'On' : 'Off'}</span>
-        <svg class="chev" viewBox="0 0 24 24">${ICONS.chevronRight}</svg>
+      <button class="menu-sheet-row" data-go="goals">
+        <span class="msr-icon">${icon('target', '', 2)}</span>
+        <span class="msr-label">Goals</span>
+        <span class="msr-value">${formatTotalUnit(state.settings.goalMl)} / day</span>
       </button>
-      <button class="menu-row" data-go="settings">
-        <span class="mr-icon">${icon('gear','',2)}</span>
-        <span class="mr-label">Settings</span>
-        <svg class="chev" viewBox="0 0 24 24">${ICONS.chevronRight}</svg>
+      <button class="menu-sheet-row" data-go="reminders">
+        <span class="msr-icon">${icon('bell', '', 2)}</span>
+        <span class="msr-label">Reminders</span>
+        <span class="msr-value">${state.settings.reminders.enabled ? 'On' : 'Off'}</span>
       </button>
-      <button class="menu-row" id="mr-export">
-        <span class="mr-icon">${icon('download','',2)}</span>
-        <span class="mr-label">Export Data</span>
-        <svg class="chev" viewBox="0 0 24 24">${ICONS.chevronRight}</svg>
+      <button class="menu-sheet-row" data-go="settings">
+        <span class="msr-icon">${icon('gear', '', 2)}</span>
+        <span class="msr-label">Settings</span>
       </button>
-      <button class="menu-row danger" id="mr-clear">
-        <span class="mr-icon">${icon('trash','',2)}</span>
-        <span class="mr-label">Clear All Data</span>
-        <svg class="chev" viewBox="0 0 24 24">${ICONS.chevronRight}</svg>
+      <button class="menu-sheet-row" id="ms-export">
+        <span class="msr-icon">${icon('download', '', 2)}</span>
+        <span class="msr-label">Export Data</span>
       </button>
-      <button class="menu-row" data-go="about">
-        <span class="mr-icon">${icon('info','',2)}</span>
-        <span class="mr-label">About Hydro</span>
-        <svg class="chev" viewBox="0 0 24 24">${ICONS.chevronRight}</svg>
+      <button class="menu-sheet-row danger" id="ms-clear">
+        <span class="msr-icon">${icon('trash', '', 2)}</span>
+        <span class="msr-label">Clear All Data</span>
+      </button>
+      <button class="menu-sheet-row" data-go="about">
+        <span class="msr-icon">${icon('info', '', 2)}</span>
+        <span class="msr-label">About Hydro</span>
       </button>
     </div>
-
-    <div class="privacy-banner" style="margin-top:18px;">
-      ${icon('shield','',1.8)}
-      <p><b>100% private.</b> Everything you log stays in this browser's local storage on this device. Nothing is uploaded, synced, or shared.</p>
-    </div>
+    <button class="menu-sheet-cancel" id="ms-cancel">Cancel</button>
   `;
-  main.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => navigate(b.dataset.go)));
-  document.getElementById('mr-export').addEventListener('click', exportData);
-  document.getElementById('mr-clear').addEventListener('click', () => {
+  const overlay = openSheet(html);
+  overlay.querySelector('#ms-cancel').addEventListener('click', closeSheet);
+  overlay.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => {
+    closeSheet();
+    navigateFrom(b.dataset.go);
+  }));
+  overlay.querySelector('#ms-export').addEventListener('click', () => { closeSheet(); exportData(); });
+  overlay.querySelector('#ms-clear').addEventListener('click', () => {
+    closeSheet();
     confirmDialog({
       title: 'Clear all data?',
       message: `This permanently deletes <b>all ${state.entries.length} entries</b> and resets your settings on this device. This can\u2019t be undone.`,
@@ -1193,6 +1205,72 @@ function renderMore(main) {
         navigate('dashboard');
       }
     });
+  });
+}
+
+/* ==========================================================================
+   17b. MY PROFILE
+   ========================================================================== */
+function renderProfile(main) {
+  const s = state.settings;
+  main.innerHTML = `
+    <h2 class="tb-heading" style="display:block;margin:2px 0 18px;font-size:20px;">My Profile</h2>
+
+    <div class="form-label first">Full name</div>
+    <div class="field"><input type="text" id="pf-name" placeholder="Your name" value="${escapeHtml(s.userName)}" maxlength="30"></div>
+
+    <div class="form-label">Units</div>
+    <div class="segmented" id="pf-units" style="width:100%;">
+      <button data-u="ml" class="${s.units === 'ml' ? 'active' : ''}">ml / L</button>
+      <button data-u="oz" class="${s.units === 'oz' ? 'active' : ''}">oz</button>
+    </div>
+
+    <div class="form-label">Daily water goal</div>
+    <div class="goal-preset-grid" id="pf-goal-presets">
+      ${GOAL_PRESETS_ML.map(ml => `<button class="goal-preset ${s.goalMl === ml ? 'selected' : ''}" data-ml="${ml}">${(ml / 1000).toFixed(1)}L</button>`).join('')}
+    </div>
+    <div class="custom-amount-row">
+      <div class="field"><input type="number" min="1" id="pf-goal-custom" value="${s.units === 'oz' ? round1(mlToOz(s.goalMl)) : s.goalMl}" inputmode="decimal"></div>
+      <span class="unit-chip" id="pf-goal-unit">${unitSuffix()}</span>
+    </div>
+
+    <p class="hairline-hint">${icon('shield', 'inline-note-icon', 2)}Your name and goal are only ever stored on this device — nothing here is sent anywhere or tied to an account.</p>
+
+    <div class="save-btn-wrap">
+      <button class="btn primary-water" id="pf-save">Save Profile</button>
+    </div>
+  `;
+
+  const unitsSeg = document.getElementById('pf-units');
+  unitsSeg.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      unitsSeg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+      document.getElementById('pf-goal-unit').textContent = btn.dataset.u === 'oz' ? 'oz' : 'ml';
+      const goalInput = document.getElementById('pf-goal-custom');
+      const currentMl = state.settings.units === 'oz' ? ozToMl(parseFloat(goalInput.value) || 0) : (parseFloat(goalInput.value) || 0);
+      goalInput.value = btn.dataset.u === 'oz' ? round1(mlToOz(currentMl)) : Math.round(currentMl);
+    });
+  });
+
+  main.querySelectorAll('#pf-goal-presets .goal-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const activeUnit = unitsSeg.querySelector('button.active').dataset.u;
+      document.getElementById('pf-goal-custom').value = activeUnit === 'oz' ? round1(mlToOz(Number(btn.dataset.ml))) : btn.dataset.ml;
+      main.querySelectorAll('#pf-goal-presets .goal-preset').forEach(b => b.classList.toggle('selected', b === btn));
+    });
+  });
+
+  document.getElementById('pf-save').addEventListener('click', () => {
+    const name = document.getElementById('pf-name').value.trim();
+    const activeUnit = unitsSeg.querySelector('button.active').dataset.u;
+    const rawGoal = parseFloat(document.getElementById('pf-goal-custom').value);
+    if (!rawGoal || rawGoal <= 0) { showToast('Enter a valid daily goal', 'warning'); return; }
+    state.settings.userName = name;
+    state.settings.units = activeUnit;
+    state.settings.goalMl = Math.round(activeUnit === 'oz' ? ozToMl(rawGoal) : rawGoal);
+    saveState();
+    showToast('Profile saved', 'checkCircle');
+    navigate(ui.cameFrom || 'dashboard');
   });
 }
 
@@ -1249,7 +1327,7 @@ function renderGoals(main) {
     state.settings.goalMl = Math.round(state.settings.units === 'oz' ? ozToMl(raw) : raw);
     saveState();
     showToast('Goal updated', 'checkCircle');
-    navigate('more');
+    navigate(ui.cameFrom || 'dashboard');
   });
 }
 
@@ -1311,7 +1389,7 @@ function renderReminders(main) {
       saveState();
       startReminderEngine();
       showToast('Reminder settings saved', 'checkCircle');
-      navigate('more');
+      navigate(ui.cameFrom || 'dashboard');
     };
 
     if (enabled && notifSupported && Notification.permission === 'default') {
@@ -1354,26 +1432,8 @@ function checkReminder() {
    20. SETTINGS
    ========================================================================== */
 function renderSettings(main) {
-  const s = state.settings;
   main.innerHTML = `
-    <h2 class="section-title first" style="margin-top:4px;">Preferences</h2>
-    <div class="menu-list">
-      <div class="toggle-row">
-        <div class="tr-text"><b>Display name</b><small>Shown on the More screen only</small></div>
-      </div>
-      <div style="padding:0 16px 16px;">
-        <div class="field"><input type="text" id="set-name" placeholder="Optional" value="${escapeHtml(s.userName)}" maxlength="30"></div>
-      </div>
-      <div class="toggle-row">
-        <div class="tr-text"><b>Units</b><small>Used across the whole app</small></div>
-        <div class="segmented" id="set-units" style="width:140px;">
-          <button data-u="ml" class="${s.units==='ml'?'active':''}">ml / L</button>
-          <button data-u="oz" class="${s.units==='oz'?'active':''}">oz</button>
-        </div>
-      </div>
-    </div>
-
-    <h2 class="section-title">Your Data</h2>
+    <h2 class="section-title first" style="margin-top:4px;">Your Data</h2>
     <div class="menu-list">
       <button class="menu-row" id="set-export">
         <span class="mr-icon">${icon('download','',2)}</span>
@@ -1390,6 +1450,11 @@ function renderSettings(main) {
         <span class="mr-label">Clear All Data<small>Delete everything on this device</small></span>
         <svg class="chev" viewBox="0 0 24 24">${ICONS.chevronRight}</svg>
       </button>
+      <button class="menu-row" id="set-profile-link">
+        <span class="mr-icon">${icon('user','',2)}</span>
+        <span class="mr-label">Name &amp; Units<small>Edit these in My Profile</small></span>
+        <svg class="chev" viewBox="0 0 24 24">${ICONS.chevronRight}</svg>
+      </button>
     </div>
 
     <div class="privacy-banner">
@@ -1400,17 +1465,8 @@ function renderSettings(main) {
     <input type="file" id="import-file-input" accept="application/json" style="display:none;">
   `;
 
-  document.getElementById('set-name').addEventListener('change', (e) => {
-    state.settings.userName = e.target.value.trim(); saveState();
-  });
-  document.getElementById('set-units').querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      state.settings.units = btn.dataset.u; saveState();
-      renderSettings(main);
-      showToast(`Units set to ${btn.dataset.u === 'oz' ? 'ounces' : 'ml / L'}`, 'checkCircle');
-    });
-  });
   document.getElementById('set-export').addEventListener('click', exportData);
+  document.getElementById('set-profile-link').addEventListener('click', () => navigateFrom('profile'));
   document.getElementById('set-clear').addEventListener('click', () => {
     confirmDialog({
       title: 'Clear all data?',

@@ -34,6 +34,21 @@ Opening `index.html` directly by double-clicking also works in most
 browsers; a local server is only needed for the service worker (offline
 caching) to register, since `file://` origins can't use it.
 
+## Navigation
+
+The nav pattern mirrors a typical mobile food-delivery app (Cloud Kitchen
+reference): a **hamburger icon** on each top-level tab opens a bottom sheet
+"Menu", and every sub-screen shows an explicit **back arrow** rather than
+relying on the browser's own back gesture — so it behaves identically on
+iOS and Android.
+
+- **Bottom nav (always visible):** Home · History · Stats
+- **Hamburger menu (bottom sheet, from any tab):** My Profile, Goals,
+  Reminders, Settings, Export Data, Clear All Data, About Hydro, Cancel
+- Screens opened from the menu remember which tab you came from, so the
+  back arrow — and the highlighted bottom-nav tab — return you to the right
+  place.
+
 ## Screens
 
 - **Dashboard (Today)** — circular goal-progress ring, quick totals, quick-add buttons, recent entries
@@ -41,10 +56,10 @@ caching) to register, since `file://` origins can't use it.
 - **Add Urination** — small/medium/large, date & time, notes
 - **History** — full local log, filterable by type and date, tap any entry to edit or delete
 - **Statistics** — Day / Month / Year tabs with bar charts for water intake and urination frequency, goal %, trends vs. the previous period, and a water-vs-urination pattern summary
+- **My Profile** — name, units (ml/L or oz), and daily water goal in one place
 - **Goals** — daily water goal with quick presets, custom amount, and a goal-streak counter
 - **Reminders** — optional on-device notifications on an interval, within active hours
-- **Settings** — units (ml/L or oz), display name, export/import/clear data
-- **More** — menu hub linking Goals, Reminders, Settings, Export, Clear Data, About
+- **Settings** — export/import/clear data, with a link back to My Profile for name/units
 - **About** — what the app does and how the privacy model works
 
 ## Data & privacy model
