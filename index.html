@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+<title>Hydro — Hydration &amp; Urination Tracker</title>
+<meta name="description" content="A private, offline hydration and urination tracker. All data stays on your device." />
+<meta name="theme-color" content="#2F80ED" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%232F80ED' d='M12 2C8 8 4 12.5 4 16a8 8 0 0 0 16 0c0-3.5-4-8-8-14z'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- App shell -->
+<div id="app">
+
+  <!-- Top bar -->
+  <header class="topbar" id="topbar">
+    <!-- populated by JS per-screen -->
+  </header>
+
+  <!-- Main content, screens render here -->
+  <main id="app-main" class="app-main" role="main"></main>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <!-- Modal root -->
+  <div id="modal-root"></div>
+
+  <!-- Bottom navigation -->
+  <nav class="bottom-nav" id="bottom-nav" aria-label="Primary">
+    <button class="nav-item" data-route="dashboard" aria-label="Home">
+      <svg viewBox="0 0 24 24" class="nav-icon"><path d="M4 11.5 12 4l8 7.5V20a1 1 0 0 1-1 1h-4.5a.5.5 0 0 1-.5-.5V15h-4v5.5a.5.5 0 0 1-.5.5H5a1 1 0 0 1-1-1v-8.5z"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="nav-item" data-route="history" aria-label="History">
+      <svg viewBox="0 0 24 24" class="nav-icon"><path d="M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-2.05-4.95L14 10h6V4l-2.2 2.2A9 9 0 0 0 12 3z"/><path d="M12 7v6l4 2"/></svg>
+      <span>History</span>
+    </button>
+    <button class="nav-item" data-route="stats" aria-label="Stats">
+      <svg viewBox="0 0 24 24" class="nav-icon"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
+      <span>Stats</span>
+    </button>
+    <button class="nav-item" data-route="more" aria-label="More">
+      <svg viewBox="0 0 24 24" class="nav-icon"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+      <span>More</span>
+    </button>
+  </nav>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
