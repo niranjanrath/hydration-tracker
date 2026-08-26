@@ -1,6 +1,6 @@
 {
-  "name": "Hydro — Hydration & Urination Tracker",
-  "short_name": "Hydro",
+  "name": "Hydration Tracker",
+  "short_name": "Hydration",
   "description": "A private, offline hydration and urination tracker. All data stays on your device.",
   "start_url": "./index.html",
   "scope": "./",

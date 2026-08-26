@@ -325,7 +325,7 @@ function renderTopbar() {
   let html = '';
   switch (ui.route) {
     case 'dashboard':
-      html = `${hamburger}<span class="tb-title">${brand}Hydro</span><span class="tb-spacer"></span>
+      html = `${hamburger}<span class="tb-title">${brand}Hydration Tracker</span><span class="tb-spacer"></span>
         <button class="tb-icon-btn" id="tb-reminder-btn" aria-label="Reminders">${icon('bell')}</button>`;
       break;
     case 'history':
@@ -482,19 +482,19 @@ function renderDashboard(main) {
       </div>
       <div class="stat-cards">
         <div class="stat-card water">
-          <span class="stat-icon">${icon('drop', '', 2)}</span>
-          <span class="stat-value">${waterCount}</span>
-          <span class="stat-label">Water logs</span>
+          <div class="stat-card-head"><span class="stat-icon">${icon('drop', '', 2)}</span><span class="stat-card-title">Water Intake</span></div>
+          <div class="stat-value">${waterCount}</div>
+          <div class="stat-caption">glasses</div>
         </div>
         <div class="stat-card urine">
-          <span class="stat-icon">${icon('droplets', '', 2)}</span>
-          <span class="stat-value">${urineN}</span>
-          <span class="stat-label">Urinations</span>
+          <div class="stat-card-head"><span class="stat-icon">${icon('droplets', '', 2)}</span><span class="stat-card-title">Urinations</span></div>
+          <div class="stat-value">${urineN}</div>
+          <div class="stat-caption">times</div>
         </div>
       </div>
       <div class="quick-actions">
-        <button class="qa-btn water" id="qa-water">${icon('plus', '', 2.4)} Add Water</button>
-        <button class="qa-btn urine" id="qa-urine">${icon('plus', '', 2.4)} Add Urination</button>
+        <button class="qa-btn water" id="qa-water"><span>+ Add Water</span></button>
+        <button class="qa-btn urine" id="qa-urine"><span>+ Add Urination</span></button>
       </div>
     </div>
 
@@ -762,9 +762,13 @@ function svgBarChart(values, labels, color, opts) {
   let labelsSvg = '';
   if (opts.labels !== false) {
     labels.forEach((l, i) => {
+      if (!l) return;
       if (i % labelEvery !== 0 && i !== n - 1) return;
-      const x = i * (barW + gap) + barW / 2;
-      labelsSvg += `<text x="${x.toFixed(1)}" y="${h - 4}" text-anchor="middle" class="chart-axis-label">${escapeHtml(l)}</text>`;
+      const cx = i * (barW + gap) + barW / 2;
+      let anchor = 'middle', x = cx;
+      if (cx < 14) { anchor = 'start'; x = 0; }
+      else if (cx > w - 14) { anchor = 'end'; x = w; }
+      labelsSvg += `<text x="${x.toFixed(1)}" y="${h - 4}" text-anchor="${anchor}" class="chart-axis-label">${escapeHtml(l)}</text>`;
     });
   }
   return `<div class="chart-wrap"><svg viewBox="0 0 ${w} ${h}">${bars}${labelsSvg}</svg></div>`;
@@ -837,7 +841,8 @@ function renderStatsDay(body) {
     const h = new Date(en.datetime).getHours();
     if (en.type === 'water') hourlyWater[h] += en.amountMl; else hourlyUrine[h] += 1;
   });
-  const hourLabels = ['12A','','','','','6A','','','','','','12P','','','','','6P','','','','','','12A'].map((l,i)=> i%6===0? l : '');
+  const hourLabels = new Array(24).fill('');
+  hourLabels[0] = '12A'; hourLabels[6] = '6A'; hourLabels[12] = '12P'; hourLabels[18] = '6P';
 
   const waterLogs = todayEntries.filter(e => e.type === 'water');
   const avgPerLog = waterLogs.length ? water / waterLogs.length : 0;
@@ -955,7 +960,7 @@ function renderStatsMonth(body) {
         ${trendPill(waterAvg, prevWaterAvg)}
       </div>
       <div class="sb-sub">Goal: ${formatTotalUnit(goal)} / day</div>
-      ${svgBarChart(dailyWater, dayLabels, 'var(--water)', { labelEvery: 7 })}
+      ${svgBarChart(dailyWater, dayLabels, 'var(--water)', {})}
       <div class="mini-stats-grid">
         <div class="mini-stat"><div class="mv">${formatTotalUnit(water)}</div><div class="ml">Month total</div></div>
         <div class="mini-stat"><div class="mv">${goalDaysMet}/${nDays}</div><div class="ml">Goal days</div></div>
@@ -973,7 +978,7 @@ function renderStatsMonth(body) {
         ${trendPill(uAvg, prevUAvg)}
       </div>
       <div class="sb-sub">Monthly total</div>
-      ${svgBarChart(dailyUrine, dayLabels, 'var(--urine)', { labelEvery: 7 })}
+      ${svgBarChart(dailyUrine, dayLabels, 'var(--urine)', {})}
     </div>
 
     <div class="card stat-block">
@@ -1118,7 +1123,7 @@ function renderHistory(main) {
     ${groups.length ? groups.map(g => `
       <div class="history-group">
         <div class="history-date-heading row-between">
-          <span>${formatDayLabel(g.date)}</span>
+          <span>${formatDateHeading(g.date)}${isToday(g.date) ? '<span class="hist-today-tag">Today</span>' : ''}</span>
           <span class="history-day-summary">${formatTotalUnit(waterTotalMl(g.items))} · ${urineCount(g.items)}x</span>
         </div>
         <div class="card" style="padding:6px 14px;">
@@ -1180,7 +1185,7 @@ function openMenuSheet() {
       </button>
       <button class="menu-sheet-row" data-go="about">
         <span class="msr-icon">${icon('info', '', 2)}</span>
-        <span class="msr-label">About Hydro</span>
+        <span class="msr-label">About Hydration Tracker</span>
       </button>
     </div>
     <button class="menu-sheet-cancel" id="ms-cancel">Cancel</button>
@@ -1459,7 +1464,7 @@ function renderSettings(main) {
 
     <div class="privacy-banner">
       ${icon('lock','',1.8)}
-      <p>Hydro has <b>no account, no backend, and no analytics</b>. Every setting and entry is stored only in this browser via Local Storage.</p>
+      <p>Hydration Tracker has <b>no account, no backend, and no analytics</b>. Every setting and entry is stored only in this browser via Local Storage.</p>
     </div>
 
     <input type="file" id="import-file-input" accept="application/json" style="display:none;">
@@ -1535,16 +1540,16 @@ function renderAbout(main) {
   main.innerHTML = `
     <div class="about-hero">
       <span class="logo-circle">${iconFilled('drop')}</span>
-      <h2>Hydro</h2>
+      <h2>Hydration Tracker</h2>
       <p>Hydration &amp; Urination Tracker</p>
     </div>
 
     <div class="privacy-banner">
       ${icon('shield','',1.8)}
-      <p><b>Your data never leaves this device.</b> Hydro has no server, no account, and no analytics. Everything is stored locally in your browser using Local Storage.</p>
+      <p><b>Your data never leaves this device.</b> Hydration Tracker has no server, no account, and no analytics. Everything is stored locally in your browser using Local Storage.</p>
     </div>
 
-    <h2 class="section-title">What Hydro does</h2>
+    <h2 class="section-title">What Hydration Tracker does</h2>
     <div class="card">
       <div class="feature-list">
         <div class="feature-item"><span class="fi-icon">${icon('drop','',2)}</span><p><b>Log in a tap.</b> Preset or custom water volumes, and small/medium/large urination events.</p></div>
@@ -1556,9 +1561,9 @@ function renderAbout(main) {
 
     <h2 class="section-title">Privacy details</h2>
     <p class="about-text">All entries, goals, and settings are saved with the browser's <b>Local Storage</b> API on this device only. Nothing is transmitted to Anthropic, to us, or to any third party — there is no backend for this app to talk to. Clearing your browser data, using a different browser, or switching devices will not carry your history over; use <b>Export Data</b> in Settings any time you want a personal backup file.</p>
-    <p class="about-text">Hydro does not require sign-up, sign-in, email, or any personal information to function.</p>
+    <p class="about-text">Hydration Tracker does not require sign-up, sign-in, email, or any personal information to function.</p>
 
-    <p class="version-tag">Hydro v1.0.0 · Built with HTML, CSS &amp; vanilla JavaScript</p>
+    <p class="version-tag">Hydration Tracker v1.0.0 · Built with HTML, CSS &amp; vanilla JavaScript</p>
   `;
 }
 

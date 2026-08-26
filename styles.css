@@ -59,7 +59,7 @@ ul{ list-style: none; padding: 0; }
 button{ font-family: inherit; cursor: pointer; }
 input, textarea, select, button{ font-family: inherit; font-size: 16px; }
 a{ color: inherit; text-decoration: none; }
-svg{ display: block; }
+svg{ display: block; width: 1em; height: 1em; }
 :focus-visible{ outline: 2.5px solid var(--water); outline-offset: 2px; }
 
 /* ==========================================================================
@@ -130,7 +130,7 @@ svg{ display: block; }
 .bottom-nav{
   position: sticky;
   bottom: 0;
-  left: 0; right: 0;
+  width: 100%;
   height: var(--nav-h);
   background: var(--card);
   display: flex;
@@ -140,8 +140,7 @@ svg{ display: block; }
   border-top-left-radius: 22px;
   border-top-right-radius: 22px;
   z-index: 30;
-  max-width: var(--max-w);
-  margin: 0 auto;
+  flex: none;
 }
 .nav-item{
   flex: 1;
@@ -238,29 +237,31 @@ svg{ display: block; }
   background: var(--water-light); padding: 3px 12px; border-radius: var(--radius-pill);
 }
 
-.stat-cards{ display:flex; gap: 12px; margin-top: 18px; }
+.stat-cards{ display:flex; gap: 12px; margin-top: 18px; align-self: stretch; }
 .stat-card{
   flex: 1; background: var(--card-2); border-radius: var(--radius-md);
-  padding: 14px 14px; display:flex; flex-direction: column; gap: 6px;
+  padding: 14px 14px 16px; display:flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 4px;
 }
+.stat-card-head{ display:flex; align-items:center; gap: 6px; margin-bottom: 6px; }
 .stat-card .stat-icon{
-  width: 30px; height: 30px; border-radius: 9px;
+  width: 24px; height: 24px; border-radius: 7px; flex: none;
   display:flex; align-items:center; justify-content:center;
 }
 .stat-card.water .stat-icon{ background: var(--water-light); }
 .stat-card.urine .stat-icon{ background: var(--urine-light); }
-.stat-card .stat-icon svg{ width:16px; height:16px; }
-.stat-card .stat-value{ font-size: 20px; font-weight: 800; }
-.stat-card .stat-label{ font-size: 12px; color: var(--text-secondary); font-weight: 600; }
+.stat-card .stat-icon svg{ width:13px; height:13px; }
+.stat-card-title{ font-size: 12.5px; font-weight: 800; color: var(--text); white-space: nowrap; }
+.stat-card .stat-value{ font-size: 26px; font-weight: 800; line-height: 1.1; }
+.stat-card .stat-caption{ font-size: 12px; color: var(--text-secondary); font-weight: 700; }
 
-.quick-actions{ display:flex; gap: 12px; margin-top: 18px; }
+.quick-actions{ display:flex; gap: 10px; margin-top: 18px; align-self: stretch; }
 .qa-btn{
-  flex:1; display:flex; align-items:center; justify-content:center; gap: 8px;
-  padding: 13px 10px; border-radius: var(--radius-pill);
-  font-weight: 800; font-size: 14.5px; border: 1.6px solid transparent;
-  background: #fff;
+  flex:1; display:flex; align-items:center; justify-content:center;
+  padding: 13px 6px; border-radius: var(--radius-pill);
+  font-weight: 800; font-size: 14px; border: 1.6px solid transparent;
+  background: #fff; white-space: nowrap; min-width: 0;
 }
-.qa-btn svg{ width:17px; height:17px; }
+.qa-btn span{ overflow: hidden; text-overflow: ellipsis; }
 .qa-btn.water{ color: var(--water); border-color: var(--water); }
 .qa-btn.urine{ color: var(--urine-dark); border-color: var(--urine); }
 .qa-btn:active{ transform: scale(0.98); }
@@ -390,7 +391,9 @@ svg{ display: block; }
 .chip{
   flex: none; padding: 9px 16px; border-radius: var(--radius-pill); font-weight: 700; font-size: 13px;
   background: var(--card); color: var(--text-secondary); border: 1.6px solid var(--border);
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
 }
+.chip svg{ width: 14px; height: 14px; flex: none; }
 .chip.active{ background: var(--text); color: #fff; border-color: var(--text); }
 .chip.active.water-c{ background: var(--water); border-color: var(--water); }
 .chip.active.urine-c{ background: var(--urine); border-color: var(--urine); }
@@ -398,6 +401,10 @@ svg{ display: block; }
 .history-group{ margin-bottom: 8px; }
 .history-date-heading{
   font-size: 13px; font-weight: 800; color: var(--text-secondary); margin: 18px 2px 8px;
+}
+.hist-today-tag{
+  display:inline-block; margin-left: 8px; font-size: 10.5px; font-weight: 800; color: var(--water);
+  background: var(--water-light); padding: 2px 8px; border-radius: var(--radius-pill); vertical-align: 1px;
 }
 .history-day-summary{ font-size: 11.5px; font-weight: 700; color: var(--text-faint); }
 
