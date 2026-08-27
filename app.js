@@ -1568,12 +1568,86 @@ function renderAbout(main) {
 }
 
 /* ==========================================================================
-   22. INIT
+   22. INSTALL PROMPT
+   Chrome/Android exposes a real install API (beforeinstallprompt). iOS has
+   no such API — Safari only supports the manual Share > Add to Home Screen
+   flow — so we detect that case and show instructions instead.
+   ========================================================================== */
+let deferredInstallPrompt = null;
+const INSTALL_DISMISS_KEY = 'hydro_install_dismissed_at';
+const INSTALL_DISMISS_DAYS = 7;
+
+function isStandaloneDisplay() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function isIOSDevice() {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+function installDismissedRecently() {
+  const t = localStorage.getItem(INSTALL_DISMISS_KEY);
+  if (!t) return false;
+  return (Date.now() - Number(t)) < INSTALL_DISMISS_DAYS * 24 * 60 * 60 * 1000;
+}
+function dismissInstallBanner() {
+  localStorage.setItem(INSTALL_DISMISS_KEY, String(Date.now()));
+  const el = document.getElementById('install-banner');
+  if (el) el.innerHTML = '';
+}
+
+function renderInstallBanner() {
+  const el = document.getElementById('install-banner');
+  if (!el) return;
+  if (isStandaloneDisplay() || installDismissedRecently()) { el.innerHTML = ''; return; }
+
+  if (deferredInstallPrompt) {
+    el.innerHTML = `
+      <div class="install-banner">
+        <span class="install-banner-icon">${iconFilled('drop')}</span>
+        <div class="install-banner-text"><b>Install Hydration Tracker</b><small>Add it to your home screen for a full-screen app experience.</small></div>
+        <button class="install-banner-btn" id="install-now-btn">Install</button>
+        <button class="install-banner-close" id="install-dismiss-btn" aria-label="Dismiss">${icon('x', '', 2.4)}</button>
+      </div>`;
+    document.getElementById('install-now-btn').addEventListener('click', async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      el.innerHTML = '';
+    });
+    document.getElementById('install-dismiss-btn').addEventListener('click', dismissInstallBanner);
+  } else if (isIOSDevice()) {
+    el.innerHTML = `
+      <div class="install-banner">
+        <span class="install-banner-icon">${iconFilled('drop')}</span>
+        <div class="install-banner-text"><b>Install Hydration Tracker</b><small>Tap the Share icon, then "Add to Home Screen".</small></div>
+        <button class="install-banner-close" id="install-dismiss-btn" aria-label="Dismiss">${icon('x', '', 2.4)}</button>
+      </div>`;
+    document.getElementById('install-dismiss-btn').addEventListener('click', dismissInstallBanner);
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  renderInstallBanner();
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  const el = document.getElementById('install-banner');
+  if (el) el.innerHTML = '';
+  showToast('Installed! Find it on your home screen.', 'checkCircle');
+});
+
+/* ==========================================================================
+   23. INIT
    ========================================================================== */
 function init() {
   ui.route = currentRouteFromHash();
   if (!location.hash) location.hash = '#/dashboard';
   render();
+  renderInstallBanner();
   if (state.settings.reminders.enabled) startReminderEngine();
 
   if ('serviceWorker' in navigator) {

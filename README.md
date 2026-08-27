@@ -5,6 +5,16 @@ plain HTML, CSS, and vanilla JavaScript — no frameworks, no build step, no
 backend, and no external database. Every entry, goal, and setting is stored
 on-device using the browser's **Local Storage** API.
 
+## Installing as an app
+
+This is a real installable PWA, not just a browser bookmark:
+
+- **Android/desktop Chrome:** an in-app "Install Hydration Tracker" banner appears automatically (backed by the browser's `beforeinstallprompt` event) — tap **Install** and it's added as a standalone app with its own icon, no address bar.
+- **iOS Safari:** iOS has no install API, so the banner instead shows the manual steps — tap the Share icon, then **Add to Home Screen**.
+- Once installed, the app launches full-screen: the status bar and bottom gesture-bar areas are colored to match the app background (via `theme-color` + safe-area insets) instead of showing as separate black system bars.
+- Real PNG icons ship in `icons/` (192px, 512px, a maskable 512px for Android's adaptive-icon shapes, and an Apple touch icon) — this is what lets Chrome treat it as a genuine installable app rather than a plain shortcut.
+- Dismissing the install banner hides it for 7 days; it's not shown at all once the app is already running in standalone mode.
+
 ## Project structure
 
 ```
@@ -13,6 +23,7 @@ hydration-tracker/
 ├── styles.css           All design tokens, layout, and component styles
 ├── app.js                State, router, screens, charts, reminders — everything runs from here
 ├── manifest.json      Web app manifest (installable, "Add to Home Screen")
+├── icons/                 Real PNG app icons (192/512/maskable/Apple touch/favicon)
 ├── service-worker.js  Caches the app shell so it also works offline
 └── README.md            This file
 ```

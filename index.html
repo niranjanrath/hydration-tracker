@@ -5,9 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
 <title>Hydration Tracker</title>
 <meta name="description" content="A private, offline hydration and urination tracker. All data stays on your device." />
-<meta name="theme-color" content="#2F80ED" />
+
+<!-- Theme color matches the app's own background so the OS status bar blends
+     seamlessly into the app instead of showing as a separate black bar. -->
+<meta name="theme-color" content="#EEF3FA" />
 <link rel="manifest" href="manifest.json" />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%232F80ED' d='M12 2C8 8 4 12.5 4 16a8 8 0 0 0 16 0c0-3.5-4-8-8-14z'/%3E%3C/svg%3E" />
+
+<!-- Standard + maskable icons for Android/desktop install -->
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+
+<!-- iOS: enables standalone (no browser chrome) when launched from the
+     home screen, lets content draw under the status bar, and sets the
+     home-screen icon/name since iOS ignores the web manifest for these. -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Hydration Tracker" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -19,6 +34,9 @@
   <header class="topbar" id="topbar">
     <!-- populated by JS per-screen -->
   </header>
+
+  <!-- Install prompt (shown when installable / on iOS as a manual instruction) -->
+  <div id="install-banner"></div>
 
   <!-- Main content, screens render here -->
   <main id="app-main" class="app-main" role="main"></main>

@@ -4,13 +4,18 @@
  * screen icon. It never talks to any server on your behalf — it only
  * caches the static files that ship with this app.
  */
-const CACHE_NAME = 'hydro-cache-v1';
+const CACHE_NAME = 'hydro-cache-v2';
 const APP_SHELL = [
   './',
   './index.html',
   './styles.css',
   './app.js',
-  './manifest.json'
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './icons/icon-maskable-512.png',
+  './icons/apple-touch-icon.png',
+  './icons/favicon-32.png'
 ];
 
 self.addEventListener('install', (event) => {

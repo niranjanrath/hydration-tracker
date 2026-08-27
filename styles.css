@@ -45,7 +45,7 @@
    Reset
    ========================================================================== */
 *, *::before, *::after{ box-sizing: border-box; }
-html, body{ height: 100%; }
+html, body{ height: 100%; background: var(--bg); overscroll-behavior-y: none; }
 body{
   margin: 0;
   font-family: var(--font);
@@ -69,6 +69,7 @@ svg{ display: block; width: 1em; height: 1em; }
   max-width: var(--max-w);
   margin: 0 auto;
   min-height: 100%;
+  min-height: 100dvh; /* fills the real device viewport in standalone/installed mode */
   background: var(--bg);
   position: relative;
   display: flex;
@@ -84,7 +85,11 @@ svg{ display: block; width: 1em; height: 1em; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 18px 8px;
+  /* Extra top padding clears the notch/status bar in standalone mode so
+     controls never sit underneath it, while this row's own background
+     (same color as the page) still extends up behind the status bar for
+     a seamless, edge-to-edge look instead of a hard black system bar. */
+  padding: calc(14px + env(safe-area-inset-top)) 18px 8px;
 }
 .topbar .tb-back{
   width: 36px; height: 36px;
@@ -121,7 +126,7 @@ svg{ display: block; width: 1em; height: 1em; }
 
 .app-main{
   flex: 1;
-  padding: 4px 18px calc(var(--nav-h) + 28px);
+  padding: 4px 18px calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 28px);
 }
 
 /* ==========================================================================
@@ -131,7 +136,8 @@ svg{ display: block; width: 1em; height: 1em; }
   position: sticky;
   bottom: 0;
   width: 100%;
-  height: var(--nav-h);
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--card);
   display: flex;
   align-items: stretch;
@@ -548,6 +554,30 @@ svg{ display: block; width: 1em; height: 1em; }
 .about-hero .logo-circle svg{ width:34px; height:34px; fill:#fff; }
 .about-hero h2{ font-size: 19px; font-weight: 800; }
 .about-hero p{ font-size: 12.5px; color: var(--text-secondary); font-weight: 700; margin-top: 3px; }
+
+/* Install prompt banner (persists across routes, sits just under the topbar) */
+.install-banner{
+  display:flex; align-items:center; gap: 12px;
+  background: var(--water-light); border-radius: var(--radius-md);
+  padding: 12px 12px 12px 14px; margin: 6px 18px 10px;
+}
+.install-banner-icon{
+  width: 34px; height:34px; border-radius: 50%; background: var(--water);
+  display:flex; align-items:center; justify-content:center; flex:none;
+}
+.install-banner-icon svg{ width:17px; height:17px; fill:#fff; }
+.install-banner-text{ flex:1; min-width:0; }
+.install-banner-text b{ display:block; font-size: 13.5px; font-weight: 800; color: var(--water-dark); }
+.install-banner-text small{ display:block; font-size: 11.5px; font-weight: 600; color: var(--water-dark); opacity:.85; margin-top: 1px; line-height:1.35; }
+.install-banner-btn{
+  flex:none; background: var(--water); color:#fff; border:none; border-radius: var(--radius-pill);
+  padding: 9px 16px; font-weight: 800; font-size: 13px;
+}
+.install-banner-close{
+  flex:none; width:26px; height:26px; border-radius:50%; background:none; border:none;
+  display:flex; align-items:center; justify-content:center; color: var(--water-dark); opacity:.7;
+}
+.install-banner-close svg{ width:13px; height:13px; }
 
 .privacy-banner{
   display:flex; gap: 12px; align-items:flex-start; background: var(--water-light);
