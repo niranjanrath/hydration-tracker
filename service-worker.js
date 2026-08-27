@@ -4,7 +4,7 @@
  * screen icon. It never talks to any server on your behalf — it only
  * caches the static files that ship with this app.
  */
-const CACHE_NAME = 'hydro-cache-v2';
+const CACHE_NAME = 'hydro-cache-v3';
 const APP_SHELL = [
   './',
   './index.html',
