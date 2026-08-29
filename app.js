@@ -1119,12 +1119,15 @@ function renderHistory(main) {
     </div>
 
     ${groups.length ? groups.map(g => {
-      const dayTotals = entriesForDay(g.date);
+      let summary;
+      if (ui.historyType === 'water') summary = formatTotalUnit(waterTotalMl(g.items));
+      else if (ui.historyType === 'urine') summary = `${urineCount(g.items)}x`;
+      else summary = `${formatTotalUnit(waterTotalMl(g.items))} · ${urineCount(g.items)}x`;
       return `
       <div class="history-group">
         <div class="history-date-heading row-between">
           <span>${formatDateHeading(g.date)}${isToday(g.date) ? '<span class="hist-today-tag">Today</span>' : ''}</span>
-          <span class="history-day-summary">${formatTotalUnit(waterTotalMl(dayTotals))} · ${urineCount(dayTotals)}x</span>
+          <span class="history-day-summary">${summary}</span>
         </div>
         <div class="card" style="padding:6px 14px;">
           ${g.items.map(entryRowHtml).join('')}
