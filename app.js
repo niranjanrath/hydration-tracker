@@ -839,7 +839,7 @@ function renderStatsDay(body) {
   const hourlyUrine = new Array(24).fill(0);
   todayEntries.forEach(en => {
     const h = new Date(en.datetime).getHours();
-    if (en.type === 'water') hourlyWater[h] += en.amountMl; else hourlyUrine[h] += 1;
+    if (en.type === 'water') hourlyWater[h] += en.amountMl; else hourlyUrine[h] += (SIZE_ML[en.size] || SIZE_ML.medium);
   });
   const hourLabels = new Array(24).fill('');
   hourLabels[0] = '12A'; hourLabels[6] = '6A'; hourLabels[12] = '12P'; hourLabels[18] = '6P';
@@ -849,8 +849,6 @@ function renderStatsDay(body) {
   const times = todayEntries.map(e => new Date(e.datetime)).sort((a,b)=>a-b);
   const firstLog = times[0] ? formatTime(times[0]) : '—';
   const lastLog = times.length ? formatTime(times[times.length-1]) : '—';
-
-  const ratio = water > 0 ? (uCount / (water / 1000)) : 0;
 
   body.innerHTML = `
     ${statsDateNav({ label: formatDayLabel(day), nextDisabled: isToday(day) })}
@@ -895,9 +893,9 @@ function renderStatsDay(body) {
       <div class="stat-block-head"><span class="sb-title">Water vs. Urination</span></div>
       <div class="pattern-note">
         ${icon('info','',2)}
-        <p>${water > 0
-          ? `<b>${uCount}</b> urination${uCount===1?'':'s'} logged for every <b>${formatTotalUnit(water)}</b> of water today${ratio ? ` — about <b>${round1(ratio)}</b> per litre.` : '.'} Last activity ended at <b>${lastLog}</b>.`
-          : `Log some water to see how your intake compares with urination frequency.`}</p>
+        <p>${water > 0 || uCount > 0
+          ? `Today you drank <b>${formatTotalUnit(water)}</b> of water and urinated <b>${uCount}</b> time${uCount===1?'':'s'}${lastLog !== '—' ? ` — the last one at <b>${lastLog}</b>.` : '.'}`
+          : `Log some water and urination entries to see how they compare.`}</p>
       </div>
     </div>
   `;
@@ -938,7 +936,7 @@ function renderStatsMonth(body) {
   const dailyUrine = new Array(nDays).fill(0);
   entries.forEach(en => {
     const d = new Date(en.datetime).getDate() - 1;
-    if (en.type === 'water') dailyWater[d] += en.amountMl; else dailyUrine[d] += 1;
+    if (en.type === 'water') dailyWater[d] += en.amountMl; else dailyUrine[d] += (SIZE_ML[en.size] || SIZE_ML.medium);
   });
   const dayLabels = dailyWater.map((_, i) => (i === 0 || (i+1) % 7 === 0) ? String(i+1) : '');
 
@@ -985,7 +983,7 @@ function renderStatsMonth(body) {
       <div class="stat-block-head"><span class="sb-title">Water vs. Urination</span></div>
       <div class="pattern-note">
         ${icon('info','',2)}
-        <p>You averaged <b>${round1(uAvg)}</b> urination${uAvg===1?'':'s'} per day against <b>${formatTotalUnit(waterAvg)}</b> of water — you hit your goal on <b>${goalDaysMet} of ${nDays}</b> days this month.</p>
+        <p>This month you averaged <b>${formatTotalUnit(waterAvg)}</b> of water and <b>${round1(uAvg)}</b> urination${uAvg===1?'':'s'} per day, meeting your goal on <b>${goalDaysMet} of ${nDays}</b> days.</p>
       </div>
     </div>
   `;
@@ -1022,7 +1020,7 @@ function renderStatsYear(body) {
   const monthlyUrine = new Array(12).fill(0);
   entries.forEach(en => {
     const m = new Date(en.datetime).getMonth();
-    if (en.type === 'water') monthlyWater[m] += en.amountMl; else monthlyUrine[m] += 1;
+    if (en.type === 'water') monthlyWater[m] += en.amountMl; else monthlyUrine[m] += (SIZE_ML[en.size] || SIZE_ML.medium);
   });
 
   let goalMonthsMet = 0;
@@ -1069,7 +1067,7 @@ function renderStatsYear(body) {
       <div class="stat-block-head"><span class="sb-title">Water vs. Urination</span></div>
       <div class="pattern-note">
         ${icon('info','',2)}
-        <p>Across ${year}, you met your daily goal in <b>${goalMonthsMet} of 12</b> months, averaging <b>${round1(uAvg)}</b> urinations per day.</p>
+        <p>In ${year} you averaged <b>${formatTotalUnit(waterAvg)}</b> of water and <b>${round1(uAvg)}</b> urination${uAvg===1?'':'s'} per day, meeting your goal in <b>${goalMonthsMet} of 12</b> months.</p>
       </div>
     </div>
   `;
@@ -1120,17 +1118,20 @@ function renderHistory(main) {
       ${ui.historyDate ? `<button class="chip" id="clear-date-filter">${formatDateShort(ui.historyDate)} ✕</button>` : ''}
     </div>
 
-    ${groups.length ? groups.map(g => `
+    ${groups.length ? groups.map(g => {
+      const dayTotals = entriesForDay(g.date);
+      return `
       <div class="history-group">
         <div class="history-date-heading row-between">
           <span>${formatDateHeading(g.date)}${isToday(g.date) ? '<span class="hist-today-tag">Today</span>' : ''}</span>
-          <span class="history-day-summary">${formatTotalUnit(waterTotalMl(g.items))} · ${urineCount(g.items)}x</span>
+          <span class="history-day-summary">${formatTotalUnit(waterTotalMl(dayTotals))} · ${urineCount(dayTotals)}x</span>
         </div>
         <div class="card" style="padding:6px 14px;">
           ${g.items.map(entryRowHtml).join('')}
         </div>
       </div>
-    `).join('') : `
+    `;
+    }).join('') : `
       <div class="card">
         <div class="empty-state">
           <span class="empty-icon">${icon('calendar', '', 1.8)}</span>
